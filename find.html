@@ -3,89 +3,151 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>LIFF 中獎紀錄查詢</title>
+  <title>🎉 LIFF 中獎紀錄查詢</title>
 
-  <!-- 1. **务必**在自定义脚本之前加载 LIFF SDK -->
-  <script src="https://static.line-scdn.net/liff/2.25.0/sdk.js"></script>
+  <!-- 1. 從同域載入已下載並放置於 /checkpoint/liff-sdk.js 的 LIFF SDK -->
+  <script src="liff-sdk.js"></script>
 
   <style>
-    body { font-family: 'Microsoft JhengHei', Arial, sans-serif; padding:20px; }
-    button { padding: 10px 20px; font-size: 16px; }
-    #output { margin-top: 20px; }
-    .card { border: 1px solid #ccc; border-radius:4px; padding:10px; margin-bottom:10px; }
+    body {
+      font-family: 'Microsoft JhengHei', Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+    #btnQuery {
+      display: block;
+      margin: 20px auto;
+      padding: 12px 24px;
+      font-size: 18px;
+      background: linear-gradient(135deg,#667eea,#764ba2);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    #btnQuery:disabled {
+      background: #999;
+      cursor: not-allowed;
+    }
+    #output {
+      max-width: 500px;
+      margin: 20px auto;
+    }
+    .card {
+      background: #fff;
+      border-radius: 6px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+    .card strong {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 18px;
+      color: #444;
+    }
+    .card p {
+      margin: 4px 0;
+      color: #555;
+    }
+    .card button {
+      margin-top: 8px;
+      padding: 8px 16px;
+      font-size: 14px;
+      background: #28a745;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .card button:hover {
+      background: #218838;
+    }
   </style>
 </head>
 <body>
-  <h1>🎉 LIFF 中獎紀錄查詢</h1>
+  <h1>LIFF 中獎紀錄查詢</h1>
   <button id="btnQuery">🔍 查詢我的紀錄</button>
   <div id="output"></div>
 
   <script>
-    // 2. 确保这里的 LIFF_ID 是你在 LINE Developers 上看到的那个 ID
-    const LIFF_ID    = '1656871455-EdjZZqag';
-    // 3. 这是你部署在 Apps Script 上的 exec URL
-    const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbxtn7ZW1d9ZUvdM-qB5s2Rw-OQoCoFf-38i6hEfbCKsbfAvbSt35ZbhN5BvyMf7B5yH-A/exec';
+    // 2. 請確認 liff-sdk.js 已正常載入
+    if (typeof liff === 'undefined') {
+      alert('LIFF SDK 載入失敗，請確認 liff-sdk.js 放在同一目錄');
+      throw new Error('LIFF SDK 未載入');
+    }
 
-    // 4. 一开始就初始化 LIFF
-    window.onload = () => {
-      // 检查 sdk 是否载入
-      if (typeof liff === 'undefined') {
-        alert('LIFF SDK 未正確載入，請檢查 <script> 標籤');
-        return;
-      }
-      liff.init({ liffId: LIFF_ID })
-        .then(() => {
-          if (!liff.isLoggedIn()) {
-            return liff.login();
-          }
-        })
-        .catch(err => alert('LIFF 初始化失敗：' + err.message));
-    };
+    const LIFF_ID    = '1656871455-EdjZZqag';                // 替換成你的 LIFF ID
+    const WEBAPP_URL = 'https://script.google.com/macros/s/你的ID/exec'; // 替換成你的 Web App exec URL
+
+    // 初始化 LIFF
+    liff.init({ liffId: LIFF_ID })
+      .then(() => {
+        if (!liff.isLoggedIn()) {
+          liff.login();
+        }
+      })
+      .catch(err => alert('LIFF 初始化失敗：' + err.message));
 
     document.getElementById('btnQuery').onclick = () => {
-      // 使用前先确认 SDK 已经就绪
-      if (typeof liff === 'undefined') {
-        return alert('LIFF SDK 尚未載入');
-      }
+      document.getElementById('btnQuery').disabled = true;
       liff.getProfile()
         .then(profile => fetchRecords(profile.userId))
-        .catch(err => alert('取得用戶資料失敗：' + err.message));
+        .catch(err => {
+          alert('取得用戶資料失敗：' + err.message);
+          document.getElementById('btnQuery').disabled = false;
+        });
     };
 
     function fetchRecords(userId) {
       const out = document.getElementById('output');
-      out.textContent = '載入中…';
+      out.innerHTML = '載入中…';
+
       fetch(WEBAPP_URL, {
         method: 'POST',
-        headers: { 'Content-Type':'application/json' },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'searchRecords', userId })
       })
       .then(r => r.json())
       .then(json => {
-        if (!json.success) throw new Error(json.message);
+        document.getElementById('btnQuery').disabled = false;
+        if (!json.success) {
+          out.textContent = '錯誤：' + json.message;
+          return;
+        }
         if (json.records.length === 0) {
           out.textContent = '🔍 查無紀錄';
           return;
         }
         out.innerHTML = '';
-        json.records.forEach(r => {
+        currentRecords = json.records;
+        json.records.forEach((r, i) => {
           const card = document.createElement('div');
           card.className = 'card';
           card.innerHTML = `
-            <strong>${r.gameName}</strong><br>
-            使用者：${r.inename||r.userId}<br>
-            中獎時間：${r.winTime}<br>
+            <strong>遊戲：${r.gameName}</strong>
+            <p>使用者：${r.inename || r.userId}</p>
+            <p>中獎時間：${r.winTime}</p>
             ${r.isVerified
-              ? `<span style="color:green">✓ 已核銷：${r.verifyTime}</span>`
-              : `<button onclick="verify('${r.userId}','${r.gameName}','${r.winTime}')">核銷此筆</button>`}
+              ? `<p style="color:green;">✓ 已核銷：${r.verifyTime}</p>`
+              : `<button onclick="verifyRecord(${i})">核銷此筆</button>`}
           `;
           out.appendChild(card);
         });
       })
-      .catch(err => out.textContent = '錯誤：' + err.message);
+      .catch(err => {
+        document.getElementById('btnQuery').disabled = false;
+        out.textContent = '伺服器錯誤：' + err.message;
+      });
     }
 
-    function verify(lineId, gameName, winTime) {
+    function verifyRecord(index) {
+      const record = currentRecords[index];
       const now = new Date();
       const ts = now.getFullYear() + '-' +
                  String(now.getMonth()+1).padStart(2,'0') + '-' +
@@ -93,12 +155,16 @@
                  String(now.getHours()).padStart(2,'0') + ':' +
                  String(now.getMinutes()).padStart(2,'0') + ':' +
                  String(now.getSeconds()).padStart(2,'0');
+
       fetch(WEBAPP_URL, {
         method: 'POST',
-        headers: { 'Content-Type':'application/json' },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'verifyRecord',
-          lineId, gameName, winTime, currentVerifyTime: ts
+          lineId: record.userId,
+          gameName: record.gameName,
+          winTime: record.winTime,
+          currentVerifyTime: ts
         })
       })
       .then(r => r.json())
@@ -109,6 +175,9 @@
       })
       .catch(err => alert('核銷失敗：' + err.message));
     }
+
+    // 用來暫存查到的紀錄
+    let currentRecords = [];
   </script>
 </body>
 </html>
