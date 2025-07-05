@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>LIFF 中獎紀錄查詢</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+
+  <!-- 載入 LIFF SDK -->
+  <script src="https://static.line-scdn.net/liff/2.25.0/sdk.js"></script>
+
+  <style>
+    body { font-family:sans-serif; padding:20px; }
+    button { padding:10px 20px; font-size:16px; }
+    .card { border:1px solid #ccc; margin:10px 0; padding:10px; border-radius:4px; }
+  </style>
+</head>
+<body>
+  <h1>🎉 中獎紀錄查詢</h1>
+  <button id="btnQuery">查詢我的紀錄</button>
+  <div id="output"></div>
+
+  <script>
+    // 替換為你的執行網址
+    const WEBAPP_URL = 'https://script.google.com/macros/s/你的ID/exec';
+    const LIFF_ID    = '1656871455-EdjZZqag';
+
+    // 初始化 LIFF
+    liff.init({ liffId: LIFF_ID })
+      .then(() => {
+        if (!liff.isLoggedIn()) liff.login();
+      })
+      .catch(err => alert('LIFF 初始化失敗：'+err.message));
+
+    document.getElementById('btnQuery').onclick = () => {
+      liff.getProfile()
+        .then(profile => fetchRecords(profile.userId))
+        .catch(err => alert('取得資料失敗：'+err.message));
+    };
+
+    function fetchRecords(userId) {
+      const out = document.getElementById('output');
+      out.innerHTML = '載入中…';
+      fetch(WEBAPP_URL, {
+        method: 'POST',
+        headers: { 'Content-Type':'application/json' },
+        body: JSON.stringify({ action:'searchRecords', userId })
+      })
+      .then(r => r.json())
+      .then(json => {
+        if (!json.success) throw new Error(json.message);
+        out.innerHTML = json.records.length
+          ? json.records.map(r=>`
+              <div class="card">
+                <strong>${r.gameName}</strong><br>
+                使用者：${r.inename||r.userId}<br>
+                中獎時間：${r.winTime}<br>
+                ${r.isVerified
+                  ? `✓ 已核銷：${r.verifyTime}`
+                  : `<button onclick="verify('${r.userId}','${r.gameName}','${r.winTime}')">核銷此筆</button>`}
+              </div>`).join('')
+          : '🔍 查無紀錄';
+      })
+      .catch(err => out.innerHTML = '錯誤：'+err.message);
+    }
+
+    function verify(lineId, gameName, winTime) {
+      const out = document.getElementById('output');
+      out.innerHTML = '核銷中…';
+      const now = new Date();
+      const ts = now.getFullYear()+'-'+(now.getMonth()+1).toString().padStart(2,'0')+'-'+
+                 now.getDate().toString().padStart(2,'0')+' '+now.getHours().toString().padStart(2,'0')+':' +
+                 now.getMinutes().toString().padStart(2,'0')+':'+now.getSeconds().toString().padStart(2,'0');
+      fetch(WEBAPP_URL, {
+        method: 'POST',
+        headers: { 'Content-Type':'application/json' },
+        body: JSON.stringify({
+          action:'verifyRecord',
+          lineId, gameName, winTime, currentVerifyTime:ts
+        })
+      })
+      .then(r=>r.json())
+      .then(json=>{
+        if (!json.success) throw new Error(json.message);
+        alert('核銷成功');
+        document.getElementById('btnQuery').click();
+      })
+      .catch(err=>alert('核銷失敗：'+err.message));
+    }
+  </script>
+</body>
+</html>
