@@ -21,7 +21,7 @@
 
   <script>
     // 替換為你的執行網址
-    const WEBAPP_URL = 'https://script.google.com/macros/s/你的ID/exec';
+    const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbxtn7ZW1d9ZUvdM-qB5s2Rw-OQoCoFf-38i6hEfbCKsbfAvbSt35ZbhN5BvyMf7B5yH-A/exec';
     const LIFF_ID    = '1656871455-EdjZZqag';
 
     // 初始化 LIFF
