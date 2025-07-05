@@ -5,69 +5,20 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>🎉 LIFF 中獎紀錄查詢</title>
 
-  <!-- 1. 從同域載入已下載並放置於 /checkpoint/liff-sdk.js 的 LIFF SDK -->
-  <script src="liff-sdk.js"></script>
+  <!-- —— 1. 改成絕對路徑引用 SDK —— -->
+  <script src="https://fangwl591021.github.io/checkpoint/liff-sdk.js"></script>
 
   <style>
-    body {
-      font-family: 'Microsoft JhengHei', Arial, sans-serif;
-      margin: 0;
-      padding: 20px;
-      background: #f5f5f5;
-    }
-    h1 {
-      text-align: center;
-      color: #333;
-    }
-    #btnQuery {
-      display: block;
-      margin: 20px auto;
-      padding: 12px 24px;
-      font-size: 18px;
-      background: linear-gradient(135deg,#667eea,#764ba2);
-      color: #fff;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-    }
-    #btnQuery:disabled {
-      background: #999;
-      cursor: not-allowed;
-    }
-    #output {
-      max-width: 500px;
-      margin: 20px auto;
-    }
-    .card {
-      background: #fff;
-      border-radius: 6px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-      padding: 16px;
-      margin-bottom: 12px;
-    }
-    .card strong {
-      display: block;
-      margin-bottom: 8px;
-      font-size: 18px;
-      color: #444;
-    }
-    .card p {
-      margin: 4px 0;
-      color: #555;
-    }
-    .card button {
-      margin-top: 8px;
-      padding: 8px 16px;
-      font-size: 14px;
-      background: #28a745;
-      color: #fff;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-    .card button:hover {
-      background: #218838;
-    }
+    body { font-family:'Microsoft JhengHei',sans-serif; padding:20px; background:#f5f5f5; }
+    h1 { text-align:center; color:#333; }
+    #btnQuery { display:block; margin:20px auto; padding:12px 24px; font-size:18px; 
+                background:linear-gradient(135deg,#667eea,#764ba2); color:#fff; border:none; border-radius:8px; cursor:pointer; }
+    #output { max-width:500px; margin:20px auto; }
+    .card { background:#fff; border-radius:6px; box-shadow:0 2px 6px rgba(0,0,0,0.1); padding:16px; margin-bottom:12px; }
+    .card strong { display:block; margin-bottom:8px; font-size:18px; color:#444; }
+    .card p { margin:4px 0; color:#555; }
+    .card button { margin-top:8px; padding:8px 16px; font-size:14px; background:#28a745; color:#fff; border:none; border-radius:6px; cursor:pointer; }
+    .card button:hover { background:#218838; }
   </style>
 </head>
 <body>
@@ -76,24 +27,27 @@
   <div id="output"></div>
 
   <script>
-    // 2. 請確認 liff-sdk.js 已正常載入
+    // —— 2. 确认 SDK 成功加载 ——
+    console.log('typeof liff =', typeof liff);
     if (typeof liff === 'undefined') {
-      alert('LIFF SDK 載入失敗，請確認 liff-sdk.js 放在同一目錄');
+      alert('LIFF SDK 載入失敗，請確認 https://fangwl591021.github.io/checkpoint/liff-sdk.js 可正常開啟');
       throw new Error('LIFF SDK 未載入');
     }
 
-    const LIFF_ID    = '1656871455-EdjZZqag';                // 替換成你的 LIFF ID
-    const WEBAPP_URL = 'https://script.google.com/macros/s/你的ID/exec'; // 替換成你的 Web App exec URL
+    const LIFF_ID    = '165687155-EdjZZqag';              // ← 填你的 LIFF ID
+    const WEBAPP_URL = 'https://script.google.com/macros/s/你的ID/exec';  // ← 填你的 Web App exec URL
+    let currentRecords = [];
 
-    // 初始化 LIFF
-    liff.init({ liffId: LIFF_ID })
-      .then(() => {
-        if (!liff.isLoggedIn()) {
-          liff.login();
-        }
-      })
-      .catch(err => alert('LIFF 初始化失敗：' + err.message));
+    // —— 3. 初始化 LIFF ——
+    window.onload = () => {
+      liff.init({ liffId: LIFF_ID })
+        .then(() => {
+          if (!liff.isLoggedIn()) liff.login();
+        })
+        .catch(err => alert('LIFF 初始化失敗：' + err.message));
+    };
 
+    // —— 4. 綁定查詢按鈕 —— 
     document.getElementById('btnQuery').onclick = () => {
       document.getElementById('btnQuery').disabled = true;
       liff.getProfile()
@@ -104,9 +58,10 @@
         });
     };
 
+    // —— 5. 向後端查詢 —— 
     function fetchRecords(userId) {
       const out = document.getElementById('output');
-      out.innerHTML = '載入中…';
+      out.textContent = '載入中…';
 
       fetch(WEBAPP_URL, {
         method: 'POST',
@@ -124,8 +79,8 @@
           out.textContent = '🔍 查無紀錄';
           return;
         }
-        out.innerHTML = '';
         currentRecords = json.records;
+        out.innerHTML = '';
         json.records.forEach((r, i) => {
           const card = document.createElement('div');
           card.className = 'card';
@@ -146,24 +101,21 @@
       });
     }
 
+    // —— 6. 核銷函式 —— 
     function verifyRecord(index) {
-      const record = currentRecords[index];
+      const r = currentRecords[index];
       const now = new Date();
-      const ts = now.getFullYear() + '-' +
-                 String(now.getMonth()+1).padStart(2,'0') + '-' +
-                 String(now.getDate()).padStart(2,'0') + ' ' +
-                 String(now.getHours()).padStart(2,'0') + ':' +
-                 String(now.getMinutes()).padStart(2,'0') + ':' +
-                 String(now.getSeconds()).padStart(2,'0');
+      const ts = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ` +
+                 `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
 
       fetch(WEBAPP_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'verifyRecord',
-          lineId: record.userId,
-          gameName: record.gameName,
-          winTime: record.winTime,
+          lineId: r.userId,
+          gameName: r.gameName,
+          winTime: r.winTime,
           currentVerifyTime: ts
         })
       })
@@ -175,9 +127,6 @@
       })
       .catch(err => alert('核銷失敗：' + err.message));
     }
-
-    // 用來暫存查到的紀錄
-    let currentRecords = [];
   </script>
 </body>
 </html>
