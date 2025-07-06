@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>LIFF 中獎紀錄查詢</title>
 
-  <!-- 正式引用 LIFF SDK -->
-  <script src="https://unpkg.com/@line/liff/dist/liff.js"></script>
+  <!-- 从 jsDelivr 自动拉取最新 v2 版本 -->
+  <script src="https://cdn.jsdelivr.net/npm/@line/liff/dist/liff.js"></script>
 
   <style>
     body { font-family:'Microsoft JhengHei',sans-serif; padding:20px; background:#f5f5f5; }
@@ -28,22 +28,27 @@
   <div id="output"></div>
 
   <script>
+    // 确认 liff 已定义
     console.log('typeof liff =', typeof liff);
     if (typeof liff === 'undefined') {
-      alert('LIFF SDK 載入失敗，請檢查網路或 CDN');
+      alert('LIFF SDK 載入失敗，請檢查<script>標籤路徑');
       throw new Error('LIFF SDK 未載入');
     }
 
-    const LIFF_ID    = '165687155-EdjZZqag';  
+    const LIFF_ID    = '165687155-EdjZZqag';
     const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbxtn7ZW1d9ZUvdM-qB5s2Rw-OQoCoFf-38i6hEfbCKsbfAvbSt35ZbhN5BvyMf7B5yH-A/exec';
     let currentRecords = [];
 
+    // 初始化
     window.onload = () => {
       liff.init({ liffId: LIFF_ID })
-        .then(() => { if (!liff.isLoggedIn()) liff.login(); })
+        .then(() => {
+          if (!liff.isLoggedIn()) liff.login();
+        })
         .catch(err => alert('LIFF 初始化失敗：' + err.message));
     };
 
+    // 綁定查詢
     document.getElementById('btnQuery').onclick = () => {
       document.getElementById('btnQuery').disabled = true;
       liff.getProfile()
@@ -54,6 +59,7 @@
         });
     };
 
+    // 查詢紀錄
     function fetchRecords(userId) {
       const out = document.getElementById('output');
       out.textContent = '載入中…';
@@ -66,16 +72,22 @@
       .then(r => r.json())
       .then(json => {
         document.getElementById('btnQuery').disabled = false;
-        if (!json.success) { out.textContent = '錯誤：' + json.message; return; }
-        if (!json.records.length) { out.textContent = '🔍 查無紀錄'; return; }
+        if (!json.success) {
+          out.textContent = '錯誤：' + json.message;
+          return;
+        }
+        if (!json.records.length) {
+          out.textContent = '🔍 查無紀錄';
+          return;
+        }
         currentRecords = json.records;
         out.innerHTML = '';
-        json.records.forEach((r, i) => {
+        json.records.forEach((r,i) => {
           const card = document.createElement('div');
           card.className = 'card';
           card.innerHTML = `
             <strong>遊戲：${r.gameName}</strong>
-            <p>使用者：${r.inename || r.userId}</p>
+            <p>使用者：${r.inename||r.userId}</p>
             <p>中獎時間：${r.winTime}</p>
             ${r.isVerified
               ? `<p style="color:green">✓ 已核銷：${r.verifyTime}</p>`
@@ -90,34 +102,31 @@
       });
     }
 
+    // 核銷
     function verifyRecord(idx) {
       const r = currentRecords[idx];
       const now = new Date();
-      const ts = now.getFullYear() + '-' +
-                 String(now.getMonth()+1).padStart(2,'0') + '-' +
-                 String(now.getDate()).padStart(2,'0') + ' ' +
-                 String(now.getHours()).padStart(2,'0') + ':' +
-                 String(now.getMinutes()).padStart(2,'0') + ':' +
-                 String(now.getSeconds()).padStart(2,'0');
+      const ts = now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0')+' '+
+                 String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0')+':'+String(now.getSeconds()).padStart(2,'0');
 
       fetch(WEBAPP_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
         body: JSON.stringify({
-          action: 'verifyRecord',
-          lineId: r.userId,
-          gameName: r.gameName,
-          winTime: r.winTime,
-          currentVerifyTime: ts
+          action:'verifyRecord',
+          lineId:r.userId,
+          gameName:r.gameName,
+          winTime:r.winTime,
+          currentVerifyTime:ts
         })
       })
-      .then(r => r.json())
-      .then(json => {
+      .then(r=>r.json())
+      .then(json=> {
         if (!json.success) throw new Error(json.message);
         alert('核銷成功');
         document.getElementById('btnQuery').click();
       })
-      .catch(err => alert('核銷失敗：' + err.message));
+      .catch(err=> alert('核銷失敗：'+err.message));
     }
   </script>
 </body>
