@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>LIFF 中獎紀錄查詢</title>
 
-  <!-- 从 UNPKG 加载 @line/liff 最新 dist 版本 -->
-  <script src="https://unpkg.com/@line/liff/dist/liff.js"></script>
+  <!-- 从 jsDelivr 加载 LIFF SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@line/liff@2.26.0/dist/liff.min.js"></script>
 
   <style>
     body { font-family:'Microsoft JhengHei',sans-serif; padding:20px; background:#f5f5f5; }
@@ -30,7 +30,7 @@
   <script>
     console.log('typeof liff =', typeof liff);
     if (typeof liff === 'undefined') {
-      alert('LIFF SDK 載入失敗，請檢查 CDN 路徑');
+      alert('LIFF SDK 載入失敗，請檢查 https://cdn.jsdelivr.net/npm/@line/liff@2.26.0/dist/liff.min.js');
       throw new Error('LIFF SDK 未載入');
     }
 
@@ -40,9 +40,7 @@
 
     window.onload = () => {
       liff.init({ liffId: LIFF_ID })
-        .then(() => {
-          if (!liff.isLoggedIn()) liff.login();
-        })
+        .then(() => { if (!liff.isLoggedIn()) liff.login(); })
         .catch(err => alert('LIFF 初始化失敗：' + err.message));
     };
 
@@ -68,14 +66,8 @@
       .then(r => r.json())
       .then(json => {
         document.getElementById('btnQuery').disabled = false;
-        if (!json.success) {
-          out.textContent = '錯誤：' + json.message;
-          return;
-        }
-        if (!json.records.length) {
-          out.textContent = '🔍 查無紀錄';
-          return;
-        }
+        if (!json.success) { out.textContent = '錯誤：' + json.message; return; }
+        if (!json.records.length) { out.textContent = '🔍 查無紀錄'; return; }
         currentRecords = json.records;
         out.innerHTML = '';
         json.records.forEach((r, i) => {
