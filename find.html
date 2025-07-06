@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>LIFF 中獎紀錄查詢</title>
 
-  <!-- 从 jsDelivr 加载 LIFF SDK -->
-  <script src="https://cdn.jsdelivr.net/npm/@line/liff@2.26.0/dist/liff.min.js"></script>
+  <!-- 正式引用 LIFF SDK -->
+  <script src="https://unpkg.com/@line/liff/dist/liff.js"></script>
 
   <style>
     body { font-family:'Microsoft JhengHei',sans-serif; padding:20px; background:#f5f5f5; }
@@ -30,7 +30,7 @@
   <script>
     console.log('typeof liff =', typeof liff);
     if (typeof liff === 'undefined') {
-      alert('LIFF SDK 載入失敗，請檢查 https://cdn.jsdelivr.net/npm/@line/liff@2.26.0/dist/liff.min.js');
+      alert('LIFF SDK 載入失敗，請檢查網路或 CDN');
       throw new Error('LIFF SDK 未載入');
     }
 
