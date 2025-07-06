@@ -3,21 +3,31 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>LIFF 中獎紀錄查詢</title>
+  <title>🎉 LIFF 中獎紀錄查詢</title>
 
-  <!-- 从 UNPKG 加载 LIFF SDK -->
-  <script src="https://unpkg.com/@line/liff@2.29.0/dist/liff.js"></script>
+  <!-- 載入 LIFF SDK（UNPKG CDN） -->
+  <script src="https://unpkg.com/@line/liff@latest/dist/liff.js"></script>
 
   <style>
     body { font-family:'Microsoft JhengHei',sans-serif; padding:20px; background:#f5f5f5; }
     h1 { text-align:center; color:#333; }
-    #btnQuery { display:block; margin:20px auto; padding:12px 24px; font-size:18px;
-                background:linear-gradient(135deg,#667eea,#764ba2); color:#fff; border:none; border-radius:8px; cursor:pointer; }
+    #btnQuery {
+      display:block; margin:20px auto; padding:12px 24px; font-size:18px;
+      background:linear-gradient(135deg,#667eea,#764ba2); color:#fff;
+      border:none; border-radius:8px; cursor:pointer;
+    }
+    #btnQuery:disabled { background:#999; cursor:not-allowed; }
     #output { max-width:500px; margin:20px auto; }
-    .card { background:#fff; border-radius:6px; box-shadow:0 2px 6px rgba(0,0,0,0.1); padding:16px; margin-bottom:12px; }
+    .card {
+      background:#fff; border-radius:6px; box-shadow:0 2px 6px rgba(0,0,0,0.1);
+      padding:16px; margin-bottom:12px;
+    }
     .card strong { display:block; margin-bottom:8px; font-size:18px; color:#444; }
     .card p { margin:4px 0; color:#555; }
-    .card button { margin-top:8px; padding:8px 16px; font-size:14px; background:#28a745; color:#fff; border:none; border-radius:6px; cursor:pointer; }
+    .card button {
+      margin-top:8px; padding:8px 16px; font-size:14px;
+      background:#28a745; color:#fff; border:none; border-radius:6px; cursor:pointer;
+    }
     .card button:hover { background:#218838; }
   </style>
 </head>
@@ -27,14 +37,15 @@
   <div id="output"></div>
 
   <script>
+    // 檢查 SDK
     console.log('typeof liff =', typeof liff);
     if (typeof liff === 'undefined') {
-      alert('LIFF SDK 載入失敗，請檢查網路或 CDN');
+      alert('LIFF SDK 載入失敗');
       throw new Error('LIFF SDK 未載入');
     }
 
-    const LIFF_ID    = '1656871455-EdjZZqag';                // ← 你的 LIFF ID
-    const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbxtn7ZW1d9ZUvdM-qB5s2Rw-OQoCoFf-38i6hEfbCKsbfAvbSt35ZbhN5BvyMf7B5yH-A/exec';  // ← 你的 exec URL
+    const LIFF_ID    = '165687155-EdjZZqag';  
+    const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbxtn7ZW1d9ZUvdM-qB5s2Rw-OQoCoFf-38i6hEfbCKsbfAvbSt35ZbhN5BvyMf7B5yH-A/exec';
     let currentRecords = [];
 
     window.onload = () => {
@@ -67,8 +78,14 @@
       .then(r => r.json())
       .then(json => {
         document.getElementById('btnQuery').disabled = false;
-        if (!json.success) { out.textContent = '錯誤：' + json.message; return; }
-        if (!json.records.length) { out.textContent = '🔍 查無紀錄'; return; }
+        if (!json.success) {
+          out.textContent = '錯誤：' + json.message;
+          return;
+        }
+        if (!json.records.length) {
+          out.textContent = '🔍 查無紀錄';
+          return;
+        }
         currentRecords = json.records;
         out.innerHTML = '';
         json.records.forEach((r, i) => {
